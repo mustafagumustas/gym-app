@@ -441,10 +441,20 @@ var App = (() => {
       return "day1";
     }
   }
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem("workout_history");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
   function WorkoutTracker() {
     const [activeDay, setActiveDayState] = (0, import_react.useState)(loadActiveDay);
     const [completed, setCompleted] = (0, import_react.useState)(loadCompleted);
     const [expandedEx, setExpandedEx] = (0, import_react.useState)(null);
+    const [history, setHistory] = (0, import_react.useState)(loadHistory);
+    const [showHistory, setShowHistory] = (0, import_react.useState)(false);
     const setActiveDay = (day) => {
       setActiveDayState(day);
       try {
@@ -458,14 +468,36 @@ var App = (() => {
       } catch (e) {
       }
     }, [completed]);
+    (0, import_react.useEffect)(() => {
+      try {
+        localStorage.setItem("workout_history", JSON.stringify(history));
+      } catch (e) {
+      }
+    }, [history]);
     const workout = workoutData[activeDay];
     const toggleComplete = (dayKey, i) => {
       const k = dayKey + "-" + i;
       setCompleted((p) => ({ ...p, [k]: !p[k] }));
     };
+    const finishWorkout = (dayKey) => {
+      const wo = workoutData[dayKey];
+      if (!wo) return;
+      const total = wo.exercises.length;
+      const done = wo.exercises.filter((_, i) => completed[dayKey + "-" + i]).length;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      setHistory((prev) => [{ date: todayStr, day: dayKey, label: wo.name, done, total }, ...prev].slice(0, 200));
+      setCompleted((prev) => {
+        const next = { ...prev };
+        wo.exercises.forEach((_, i) => {
+          delete next[dayKey + "-" + i];
+        });
+        return next;
+      });
+      setExpandedEx(null);
+    };
     const doneCount = workout ? workout.exercises.filter((_, i) => completed[activeDay + "-" + i]).length : 0;
     const progress = workout ? Math.round(doneCount / workout.exercises.length * 100) : 0;
-    return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100vh", background: "#0a0a0f", fontFamily: "Segoe UI,system-ui,sans-serif", color: "#e5e7eb" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(135deg,#111827,#1a1a2e)", borderBottom: "1px solid #1f2937", padding: "20px 16px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 720, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#3B82F6,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 } }, "\u{1F3CB}\uFE0F"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, letterSpacing: -0.5 } }, "Your Gym Programme"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "#6B7280" } }, "62 kg \u2192 75 kg \xB7 4 days/week"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, overflowX: "auto" } }, weekSchedule.map((item) => {
+    return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100vh", background: "#0a0a0f", fontFamily: "Segoe UI,system-ui,sans-serif", color: "#e5e7eb" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(135deg,#111827,#1a1a2e)", borderBottom: "1px solid #1f2937", padding: "20px 16px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 720, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#3B82F6,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 } }, "\u{1F3CB}\uFE0F"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, letterSpacing: -0.5 } }, "Your Gym Programme"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "#6B7280" } }, "62 kg \u2192 75 kg \xB7 4 days/week")), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowHistory((s) => !s), style: { marginLeft: "auto", background: showHistory ? "#3B82F622" : "transparent", border: "1px solid #3B82F650", color: "#93C5FD", fontSize: 12, fontWeight: 700, borderRadius: 10, padding: "8px 12px", cursor: "pointer", flexShrink: 0 } }, "\u{1F4C5} History")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, overflowX: "auto" } }, weekSchedule.map((item) => {
       const isGym = !!workoutData[item.session];
       const isAct = item.session === activeDay;
       return /* @__PURE__ */ React.createElement(
@@ -478,7 +510,7 @@ var App = (() => {
         /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#6B7280", marginBottom: 4 } }, item.day),
         /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: isAct ? item.color : isGym ? "#d1d5db" : "#4B5563" } }, item.label)
       );
-    })))), /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 720, margin: "0 auto", padding: "20px 16px 80px" } }, workout ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(135deg," + workout.color + "18," + workout.color + "08)", border: "1px solid " + workout.color + "30", borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, letterSpacing: -0.5 } }, workout.icon, " ", workout.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, color: "#9CA3AF", marginTop: 2 } }, workout.subtitle, " \xB7 ", workout.exercises.length, " exercises")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 56, height: 56, borderRadius: "50%", background: "conic-gradient(" + workout.color + " " + progress * 3.6 + "deg,#1f2937 0deg)", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: workout.color } }, progress, "%")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "#6B7280", marginTop: 4 } }, doneCount, "/", workout.exercises.length))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, workout.exercises.map((ex, i) => {
+    })))), showHistory && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 720, margin: "0 auto", padding: "16px 16px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "#111827", border: "1px solid #1f2937", borderRadius: 14, padding: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "#e5e7eb" } }, "Workout History"), history.length > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => { if (window.confirm("Clear all workout history? This cannot be undone.")) setHistory([]); }, style: { fontSize: 11, color: "#EF4444", background: "transparent", border: "1px solid #EF444450", borderRadius: 8, padding: "4px 8px", cursor: "pointer" } }, "Clear")), history.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "#6B7280", textAlign: "center", padding: "12px 0" } }, "No sessions logged yet. Tap the \u21BB Reset button after a workout to log it here.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" } }, history.map((h, hi) => /* @__PURE__ */ React.createElement("div", { key: hi, style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "#0d0f17", borderRadius: 10, border: "1px solid #1f2937" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "#e5e7eb" } }, h.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#6B7280" } }, h.date)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: h.done === h.total ? "#10B981" : "#F59E0B" } }, h.done, "/", h.total)))))), /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 720, margin: "0 auto", padding: "20px 16px 80px" } }, workout ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(135deg," + workout.color + "18," + workout.color + "08)", border: "1px solid " + workout.color + "30", borderRadius: 16, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 800, letterSpacing: -0.5 } }, workout.icon, " ", workout.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, color: "#9CA3AF", marginTop: 2 } }, workout.subtitle, " \xB7 ", workout.exercises.length, " exercises")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 56, height: 56, borderRadius: "50%", background: "conic-gradient(" + workout.color + " " + progress * 3.6 + "deg,#1f2937 0deg)", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: workout.color } }, progress, "%")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "#6B7280", marginTop: 4 } }, doneCount, "/", workout.exercises.length), /* @__PURE__ */ React.createElement("button", { onClick: () => { if (doneCount === 0 || window.confirm("Log this session to history and reset the checklist for next time?")) finishWorkout(activeDay); }, style: { marginTop: 6, fontSize: 10, fontWeight: 700, color: workout.color, background: "transparent", border: "1px solid " + workout.color + "60", borderRadius: 8, padding: "3px 8px", cursor: "pointer" } }, "\u21BB Reset"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, workout.exercises.map((ex, i) => {
       const key = activeDay + "-" + i;
       const isDone = !!completed[key];
       const isOpen = expandedEx === key;
@@ -502,7 +534,7 @@ var App = (() => {
         },
         isDone ? "\u2713 Completed \u2014 Tap to undo" : "Mark as Done \u2713"
       ))));
-    })), progress === 100 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24, padding: 20, borderRadius: 16, textAlign: "center", background: "linear-gradient(135deg,#065F46,#064E3B)", border: "1px solid #10B981" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 36, marginBottom: 8 } }, "\u{1F389}"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "#6EE7B7" } }, "Session Complete!"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "#A7F3D0", marginTop: 6 } }, "Great work. Eat your protein, rest well."))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 52, marginBottom: 16 } }, activeDay === "run" ? "\u{1F3C3}" : "\u{1F634}"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#6B7280" } }, activeDay === "run" ? "Running Day" : "Rest Day"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, color: "#4B5563", marginTop: 8, maxWidth: 280, margin: "8px auto 0" } }, activeDay === "run" ? "Easy pace. Weeks 1-3: 3 km at 6:00-6:30/km. Rebuild gradually." : "Full rest. Sleep 7-9 hours. This is when your muscles actually grow."))));
+    })), progress === 100 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24, padding: 20, borderRadius: 16, textAlign: "center", background: "linear-gradient(135deg,#065F46,#064E3B)", border: "1px solid #10B981" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 36, marginBottom: 8 } }, "\u{1F389}"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "#6EE7B7" } }, "Session Complete!"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "#A7F3D0", marginTop: 6 } }, "Great work. Eat your protein, rest well."), /* @__PURE__ */ React.createElement("button", { onClick: () => finishWorkout(activeDay), style: { marginTop: 14, padding: "10px 20px", borderRadius: 10, border: "none", background: "#10B981", color: "#04150d", fontWeight: 800, fontSize: 13, cursor: "pointer" } }, "\u21BB Log & Reset for Next Session"))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 52, marginBottom: 16 } }, activeDay === "run" ? "\u{1F3C3}" : "\u{1F634}"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: "#6B7280" } }, activeDay === "run" ? "Running Day" : "Rest Day"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, color: "#4B5563", marginTop: 8, maxWidth: 280, margin: "8px auto 0" } }, activeDay === "run" ? "Easy pace. Weeks 1-3: 3 km at 6:00-6:30/km. Rebuild gradually." : "Full rest. Sleep 7-9 hours. This is when your muscles actually grow."))));
   }
   return __toCommonJS(src_exports);
 })();
