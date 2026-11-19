@@ -1,14 +1,15 @@
-const CACHE_NAME = "gym-programme-v1";
+const CACHE_NAME = "gym-programme-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./app.js",
+  "./app-v2.js",
+  "./react.production.min.js",
+  "./react-dom.production.min.js",
   "./manifest.json",
   "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
-  "https://unpkg.com/react@18/umd/react.production.min.js",
-  "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
 ];
 
 self.addEventListener("install", (event) => {
