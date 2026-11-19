@@ -1,4 +1,4 @@
-const CACHE_NAME = "gym-programme-v2";
+const CACHE_NAME = "gym-programme-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,6 +10,9 @@ const ASSETS = [
   "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
+  "./images/Front-Plank-resized.png",
+  "./images/Barbell-Bench-Press-resized.png",
+  "./images/Lever-Standing-Calf-Raise-resized.png",
 ];
 
 self.addEventListener("install", (event) => {

@@ -7,7 +7,11 @@ var AppV2 = (() => {
   const COLORS = { bg: "#0a0a0f", panel: "#111827", line: "#273244", text: "#f3f4f6", muted: "#9ca3af", green: "#10b981", blue: "#3b82f6" };
   const localDate = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
   const stableId = (name) => name.toLowerCase().replace(/\s*\([^)]*\)/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").replace(/^lying-leg-curl$|^leg-curl$/, "leg-curl");
-  const PLACEHOLDER_IMAGES = new Set(["plank", "barbell-bench-press", "calf-raises"]);
+  const REPLACEMENT_IMAGES = {
+    plank: "./images/Front-Plank-resized.png",
+    "barbell-bench-press": "./images/Barbell-Bench-Press-resized.png",
+    "calf-raises": "./images/Lever-Standing-Calf-Raise-resized.png"
+  };
   const parseHistory = (v) => Array.isArray(v) && v.every(x => x && typeof x === "object" && /^\d{4}-\d\d-\d\d$/.test(x.date) && typeof x.day === "string" && typeof x.label === "string" && Number.isFinite(x.done) && Number.isFinite(x.total));
   const weightFromRecord = (session, id) => {
     const direct = session.weights?.[id];
@@ -119,7 +123,7 @@ var AppV2 = (() => {
       const savedDraftWeight=draft?.day===active ? weightFromDraft(draft,id) : null;
       const weight=savedDraftWeight !== null ? savedDraftWeight : latestWeight(id);
       const last=latestWeight(id);
-      const placeholder=PLACEHOLDER_IMAGES.has(id);
+      const exerciseImage=REPLACEMENT_IMAGES[id] || ex.img;
       const stepWeight=(delta)=>{ const current=Number.parseFloat(weight); const next=Math.max(0,(Number.isFinite(current)?current:0)+delta); setWeight(id,Number(next.toFixed(2)).toString()); };
       return h("section",{key:id+"-"+i,style:{background:COLORS.panel,border:`1px solid ${isDone?"#12684b":COLORS.line}`,borderRadius:14,overflow:"hidden",marginBottom:12}},
         h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:14}},
@@ -128,7 +132,7 @@ var AppV2 = (() => {
           h("button",{onClick:()=>toggle(id),"aria-label":isDone?"Completed — tap to undo":"Mark exercise as done",style:{...buttonStyle,background:isDone?"#14532d":"#1d4ed8",borderColor:isDone?"#22c55e":"#3b82f6",color:"white",padding:"9px 10px",maxWidth:142,lineHeight:1.2}},isDone?"✓ Completed — Tap to undo":"Mark as Done ✓"),
           h("button",{onClick:()=>setChartId(chartId===id?null:id),style:buttonStyle},"Chart")
         ),
-          h("button",{onClick:()=>setZoom(placeholder?{placeholder:true,name:ex.name}:{src:ex.img}),style:{display:"block",width:"100%",background:"white",border:0,padding:8}},placeholder?h("span",{style:{display:"grid",placeItems:"center",height:150,color:"#64748b",fontSize:13}},"Image placeholder · replacement pending"):h("img",{src:ex.img,alt:ex.name,style:{display:"block",maxHeight:210,maxWidth:"100%",objectFit:"contain",margin:"auto"}})),
+          h("button",{onClick:()=>setZoom({src:exerciseImage}),style:{display:"block",width:"100%",background:"white",border:0,padding:8}},h("img",{src:exerciseImage,alt:ex.name,style:{display:"block",maxHeight:210,maxWidth:"100%",objectFit:"contain",margin:"auto"}})),
         h("div",{style:{padding:"4px 14px 14px"}},
           last!=="" && h("div",{style:{fontSize:12,color:"#93c5fd",margin:"8px 0"}},`Last time: ${last} kg`),
           h("div",{style:{display:"grid",gridTemplateColumns:"52px 1fr 52px",gap:8,alignItems:"center",marginTop:10}},
@@ -151,7 +155,7 @@ var AppV2 = (() => {
       ...exercises.map(exerciseCard),
       h("section",{style:{display:"flex",gap:8,margin:"18px 0"}},h("button",{onClick:exportData,style:{...buttonStyle,flex:1}},"Export backup"),h("label",{style:{...buttonStyle,flex:1,textAlign:"center",cursor:"pointer"}},"Import backup",h("input",{type:"file",accept:".json,application/json",onChange:importData,style:{display:"none"}}))),
       showHistory && card("Workout history",history.length?h("div",{style:{maxHeight:320,overflowY:"auto"}},...history.map((s,i)=>h("div",{key:i,style:{display:"flex",justifyContent:"space-between",borderBottom:`1px solid ${COLORS.line}`,padding:"9px 0",fontSize:13}},h("span",null,`${s.label} · ${s.date}`),h("span",null,`${s.done}/${s.total}`)))):h("div",{style:{color:COLORS.muted}},"No sessions logged yet.")),
-      zoom && h("div",{onClick:()=>setZoom(null),onTouchStart:e=>{e.currentTarget.style.touchAction="pinch-zoom";},style:{position:"fixed",inset:0,zIndex:10,background:"rgba(0,0,0,.96)",display:"flex",alignItems:"center",justifyContent:"center",touchAction:"pinch-zoom"}},h("button",{onClick:()=>setZoom(null),style:{...buttonStyle,position:"absolute",right:16,top:"max(20px,env(safe-area-inset-top))",zIndex:11}},"Close"),zoom.placeholder?h("div",{style:{color:"#cbd5e1",fontSize:16,padding:24}},`${zoom.name} · image replacement pending`):h("img",{src:zoom.src,alt:"Exercise demonstration",onClick:e=>e.stopPropagation(),style:{maxWidth:"100vw",maxHeight:"100dvh",objectFit:"contain",touchAction:"pinch-zoom"}}))
+      zoom && h("div",{onClick:()=>setZoom(null),onTouchStart:e=>{e.currentTarget.style.touchAction="pinch-zoom";},style:{position:"fixed",inset:0,zIndex:10,background:"rgba(0,0,0,.96)",display:"flex",alignItems:"center",justifyContent:"center",touchAction:"pinch-zoom"}},h("button",{onClick:()=>setZoom(null),style:{...buttonStyle,position:"absolute",right:16,top:"max(20px,env(safe-area-inset-top))",zIndex:11}},"Close"),h("img",{src:zoom.src,alt:"Exercise demonstration",onClick:e=>e.stopPropagation(),style:{maxWidth:"100vw",maxHeight:"100dvh",objectFit:"contain",touchAction:"pinch-zoom"}}))
     );
   }
   function chart(id, history) {
