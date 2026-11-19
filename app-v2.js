@@ -123,8 +123,9 @@ var AppV2 = (() => {
       const stepWeight=(delta)=>{ const current=Number.parseFloat(weight); const next=Math.max(0,(Number.isFinite(current)?current:0)+delta); setWeight(id,Number(next.toFixed(2)).toString()); };
       return h("section",{key:id+"-"+i,style:{background:COLORS.panel,border:`1px solid ${isDone?"#12684b":COLORS.line}`,borderRadius:14,overflow:"hidden",marginBottom:12}},
         h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:14}},
-          h("button",{onClick:()=>toggle(id),"aria-label":isDone?"Undo completed exercise":"Mark exercise done",style:{...buttonStyle,width:42,height:42,padding:0,background:isDone?COLORS.green:buttonStyle.background}},isDone?"✓":String(i+1)),
+          h("div",{style:{width:34,height:34,flexShrink:0,borderRadius:9,display:"grid",placeItems:"center",fontSize:13,fontWeight:750,color:isDone?"white":workout.color,background:isDone?COLORS.green:`${workout.color}22`,border:`1px solid ${isDone?COLORS.green:workout.color+"66"}`}},isDone?"✓":String(i+1)),
           h("div",{style:{flex:1,minWidth:0}},h("div",{style:{fontWeight:700}},ex.name),h("div",{style:{fontSize:12,color:COLORS.muted,marginTop:3}},`${ex.sets} sets · ${ex.reps} reps · ${ex.rest} rest`)),
+          h("button",{onClick:()=>toggle(id),"aria-label":isDone?"Completed — tap to undo":"Mark exercise as done",style:{...buttonStyle,background:isDone?"#14532d":"#1d4ed8",borderColor:isDone?"#22c55e":"#3b82f6",color:"white",padding:"9px 10px",maxWidth:142,lineHeight:1.2}},isDone?"✓ Completed — Tap to undo":"Mark as Done ✓"),
           h("button",{onClick:()=>setChartId(chartId===id?null:id),style:buttonStyle},"Chart")
         ),
           h("button",{onClick:()=>setZoom(placeholder?{placeholder:true,name:ex.name}:{src:ex.img}),style:{display:"block",width:"100%",background:"white",border:0,padding:8}},placeholder?h("span",{style:{display:"grid",placeItems:"center",height:150,color:"#64748b",fontSize:13}},"Image placeholder · replacement pending"):h("img",{src:ex.img,alt:ex.name,style:{display:"block",maxHeight:210,maxWidth:"100%",objectFit:"contain",margin:"auto"}})),
@@ -136,7 +137,7 @@ var AppV2 = (() => {
             h("button",{onClick:()=>stepWeight(2.5),"aria-label":"Increase weight by 2.5 kg",style:{...buttonStyle,fontSize:20,padding:"8px 0"}},"+")),
           chartId===id && chart(id,history)
         ),
-        ex.cues?.length>0 && h("details",{style:{padding:"0 14px 14px",color:COLORS.muted}},h("summary",{style:{cursor:"pointer"}},"Coaching cues"),h("ul",null,...ex.cues.map((c,n)=>h("li",{key:n,style:{padding:"3px 0"}},c))))
+        ex.cues?.length>0 && h("div",{style:{padding:"0 14px 12px",color:COLORS.muted,fontSize:12,lineHeight:1.4}},h("div",{style:{fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},"Coaching cues"),h("ul",{style:{margin:0,paddingLeft:18}},...ex.cues.map((c,n)=>h("li",{key:n,style:{padding:"1px 0"}},c))))
       );
     };
     const count=Object.values(done).filter(Boolean).length;
